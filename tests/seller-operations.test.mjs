@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import Database from 'better-sqlite3';
+import {readFileSync} from 'node:fs';
+import {randomUUID,createHmac} from 'node:crypto';
+import {createAdminOperations} from '../admin-operations.mjs';
+import {createSellerOperations} from '../seller-operations.mjs';
+
+test('seller records stay tenant-scoped, state transitions are validated, and financial/identity status cannot be forged',async()=>{
+ const db=new Database(':memory:');db.exec(readFileSync(new URL('../schema.sql',import.meta.url),'utf8'));
+ for(const id of ['seller-a','seller-b']){db.prepare("INSERT INTO users(id,email,password_hash,password_salt,role) VALUES(?,?,?,?,'dealer')").run(id,id+'@example.test','test','test');db.prepare('INSERT INTO dealer_profiles(user_id,business_name,contact_email) VALUES(?,?,?)').run(id,id,id+'@example.test');}
+ const context={db,send:(r,status,data)=>Object.assign(r,{status,data}),fail:(r,status,error)=>Object.assign(r,{status,data:{error}}),body:async req=>req.payload,requireCsrf:(req,res)=>{if(req.headers['x-csrf-token']==='test')return true;Object.assign(res,{status:403,data:{error:'CSRF required'}});return false;},adminLog:(u,action,type,id,details={})=>db.prepare('INSERT INTO audit_logs(id,actor_id,action,subject_type,subject_id,details_json) VALUES(?,?,?,?,?,?)').run(randomUUID(),u.id,action,type,id,JSON.stringify(details))};
+ createAdminOperations(context);
+ const env={PUBLIC_ORIGIN:'http://localhost',STRIPE_IDENTITY_SECRET_KEY:'',STRIPE_IDENTITY_WEBHOOK_SECRET:''};let providerCalls=0;
+ const fetchProvider=async(url,options)=>{providerCalls++;assert.ok(url.startsWith('https://api.stripe.com/'));assert.equal(options.body.get('options[document][require_matching_selfie]'),'true');assert.equal(options.body.get('options[document][require_live_capture]'),'true');assert.equal(options.body.get('provided_details[email]'),null);return {ok:true,json:async()=>({id:'vs_test_only',url:'https://verify.stripe.com/test/session',livemode:false})};};
+ const handler=createSellerOperations({...context,env,fetchProvider});
+ const actor={id:'seller-a',role:'dealer',csrf_token:'current'},other={id:'seller-b',role:'dealer'};
+ const call=async(path,method='GET',payload={},user=actor,csrf=true)=>{const res={};await handler({method,payload,headers:csrf?{'x-csrf-token':'test'}:{}},res,new URL('http://localhost/api/seller/operations/'+path),user);return res;};
+ assert.equal((await call('orders','GET',{},null)).status,403);
+ assert.equal((await call('orders','GET',{}, {id:'seller-a',role:'buyer'})).status,403);
+ assert.equal((await call('orders','POST',{name:'Missing token'},actor,false)).status,403);
+ assert.equal((await call('business','POST',{name:'Unsafe',passportNumber:'must-not-store'})).status,400);
+ assert.equal((await call('business','POST',{name:'Unsafe nested',legalName:{idNumber:'must-not-store'}})).status,400);
+ assert.equal((await call('stock','POST',{name:'Invalid stock',quantity:-1})).status,400);
+ assert.equal((await call('stock','POST',{name:'Fractional vehicle',quantity:0.5})).status,400);
+ const order=(await call('orders','POST',{name:'Test order',amount:125000,currency:'GHS',status:'delivered',paymentStatus:'paid',seller_id:'seller-b'})).data.item;
+ assert.equal(order.status,'pending');assert.equal(order.paymentStatus,undefined);
+ assert.equal((await call('orders/'+order.id,'GET',{},other)).status,404);
+ assert.equal((await call('orders/'+order.id+'/accepted','POST',{},other)).status,404);
+ assert.equal((await call('orders/'+order.id+'/delivered','POST')).status,409);
+ for(const action of ['accepted','packing','shipped','delivered'])assert.equal((await call('orders/'+order.id+'/'+action,'POST')).status,200);
+ assert.equal((await call('orders/'+order.id)).data.history.length,4);
+ await call('orders/'+order.id+'/archive','POST');assert.equal((await call('orders/'+order.id,'PATCH',{name:'Archived edit'})).status,409);
+ await call('orders/'+order.id+'/restore','POST');assert.equal((await call('orders/'+order.id)).data.item.archived_at,null);
+ const support=(await call('support','POST',{name:'Verification support',category:'verification',description:'Need an accessible alternative'})).data.item;
+ assert.ok(db.prepare('SELECT id FROM operations_records WHERE id=?').get(support.id));
+ const overview=(await call('overview')).data;assert.equal(overview.metrics.orders,1);assert.equal(overview.wallet.available,null);assert.deepEqual(overview.wallet.earnings,[]);assert.equal(overview.identity.status,'not_started');
+ const store=(await call('store','POST',{name:'Store profile',displayName:'My test store',vacationMode:'true',description:'A public description'})).data.item;
+ assert.deepEqual(handler.publicStore(actor.id),{});assert.equal(handler.isVacation(actor.id),true);
+ assert.equal((await call('store/'+store.id+'/publish','POST')).status,200);assert.equal(handler.publicStore(actor.id).displayName,'My test store');
+ assert.equal((await call('store/'+store.id,'GET',{},other)).status,404);
+ assert.equal((await call('verification/session/start','POST',{consent:true,documentType:'id_card'})).status,503);assert.equal(providerCalls,0);
+ env.STRIPE_IDENTITY_SECRET_KEY='sk_test_unit_only';env.STRIPE_IDENTITY_WEBHOOK_SECRET='whsec_unit_only';
+ assert.equal((await call('verification/session/start','POST',{consent:false,documentType:'id_card'})).status,400);
+ const started=await call('verification/session/start','POST',{consent:true,documentType:'id_card'});assert.equal(started.status,200);assert.equal(providerCalls,1);assert.equal((await call('verification')).data.identity.status,'in_progress');
+ const timestamp=Math.floor(Date.now()/1000);const event={id:'evt_unit_only',created:timestamp,type:'identity.verification_session.verified',livemode:false,data:{object:{id:'vs_test_only',status:'verified'}}};
+ async function webhook(event,valid=true){const raw=JSON.stringify(event),signature=createHmac('sha256',env.STRIPE_IDENTITY_WEBHOOK_SECRET).update(timestamp+'.'+raw).digest('hex'),res={};const req={method:'POST',headers:{'stripe-signature':`t=${timestamp},v1=${valid?signature:'0'.repeat(64)}`},async *[Symbol.asyncIterator](){yield raw;}};await handler(req,res,new URL('http://localhost/api/seller/identity/webhook'),null);return res;}
+ assert.equal((await webhook(event,false)).status,400);assert.equal((await call('verification')).data.identity.status,'in_progress');
+ assert.equal((await webhook(event)).status,200);let identity=(await call('verification')).data.identity;assert.equal(identity.status,'verified');assert.equal(identity.verifiedForProduction,false);
+ await webhook(event);assert.equal(db.prepare('SELECT count(*) n FROM seller_provider_events').get().n,1);
+ env.NODE_ENV='production';identity=(await call('verification')).data.identity;assert.equal(identity.status,'not_started');assert.equal(identity.verifiedForProduction,false);
+ assert.equal((await call('import/batch/preview','POST',{items:[{make:'Toyota'}]})).data.valid,false);
+ assert.equal((await call('import/batch/commit','POST',{items:[{make:'Toyota',model:'Corolla',year:2022}]})).data.imported,1);
+ assert.equal(db.prepare('SELECT seller_id FROM seller_listing_drafts').get().seller_id,'seller-a');
+ db.close();
+});

@@ -1,0 +1,6 @@
+{
+  "name": "Auto Connect",
+  "description": "Ghana-first automotive marketplace with vehicle discovery, buyer and seller workspaces, admin moderation, and SQLite persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

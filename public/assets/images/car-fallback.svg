@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-label="Vehicle photograph unavailable">
+  <rect width="1200" height="760" fill="#202020"/><path d="M0 554h1200v206H0z" fill="#181818"/>
+  <path d="m244 480 75-153c14-29 39-47 72-52l273-33c31-4 58 5 82 28l119 116 92 24c32 8 53 35 53 67v69H211v-32c0-18 11-34 33-43Z" fill="#333" stroke="#696969" stroke-width="8"/>
+  <path d="m356 319-58 121h252V268l-144 18c-22 3-40 15-50 33Zm225-51v172h328L802 327c-18-18-36-28-60-31l-161-28Z" fill="#252525" stroke="#555" stroke-width="7"/>
+  <circle cx="372" cy="541" r="70" fill="#111" stroke="#777" stroke-width="12"/><circle cx="372" cy="541" r="27" fill="#555"/><circle cx="833" cy="541" r="70" fill="#111" stroke="#777" stroke-width="12"/><circle cx="833" cy="541" r="27" fill="#555"/>
+  <path d="m238 467-62 17v50h66m734-54 70 20v35h-72" fill="none" stroke="#60a5fa" stroke-width="10"/>
+  <text x="600" y="687" fill="#999" font-family="Arial,sans-serif" font-size="22" text-anchor="middle">VEHICLE IMAGE UNAVAILABLE</text>
+</svg>

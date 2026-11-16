@@ -1,0 +1,365 @@
+@import "tailwindcss";
+@font-face { font-family:"Onest"; font-style:normal; font-weight:400 700; font-display:swap; src:url("/assets/fonts/onest-latin.woff2") format("woff2"); }
+@font-face { font-family:"JetBrains Mono"; font-style:normal; font-weight:400 500; font-display:swap; src:url("/assets/fonts/jetbrains-mono-latin.woff2") format("woff2"); }
+
+@theme {
+  --font-sans: "Onest", sans-serif;
+  --font-display: "Onest", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-market-black: #111111;
+  --color-market-blue: #60a5fa;
+  --color-market-white: #f1f1f1;
+  --color-market-steel: #777777;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; background: #111; }
+  body { margin: 0; min-width: 320px; background: #111; color: #f1f1f1; font-family: "Onest", sans-serif; -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #93c5fd; outline-offset: 3px; }
+  ::selection { color: #111; background: #60a5fa; }
+  html { color-scheme: light dark; scrollbar-color: #52525b #111; }
+  input, textarea { caret-color: #60a5fa; }
+  select {
+    color-scheme: light dark;
+    background-color: #151b24;
+    color: #f1f5f9;
+  }
+  select option,
+  select optgroup {
+    background-color: #151b24;
+    color: #f1f5f9;
+  }
+  select option:checked {
+    background-color: #1e3a5f;
+    color: #ffffff;
+  }
+  a { text-underline-offset: .2em; }
+  h1, h2, h3 { text-wrap: balance; }
+}
+
+@layer components {
+  .eyebrow { @apply flex items-center gap-3 font-mono text-[10px] uppercase tracking-[.18em] text-zinc-400; }
+  .eyebrow::before { content: ""; @apply h-px w-7 bg-market-blue; }
+  .btn-primary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-market-blue px-5 text-sm font-semibold text-black transition duration-200 hover:bg-[#93c5fd] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-secondary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/20 bg-white/[.03] px-5 text-sm font-medium text-white transition duration-200 hover:border-white/40 hover:bg-white/[.07] active:scale-[.98]; }
+  .field { @apply min-h-12 w-full rounded-md border border-white/10 bg-[#151b24] px-3.5 text-sm text-white placeholder:text-zinc-400 transition focus:border-market-blue; }
+  select.field { background-color: #151b24; color: #f1f5f9; color-scheme: light dark; }
+  select.field option, select.field optgroup { background-color: #151b24; color: #f1f5f9; }
+  .surface { @apply rounded-xl border border-white/10 bg-white/[.035]; }
+}
+
+@media (prefers-color-scheme: light) {
+  html {
+    background: #f8fafc;
+    color: #0f172a;
+    color-scheme: light;
+    scrollbar-color: #94a3b8 #f1f5f9;
+  }
+  body {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+  select, select.field {
+    color-scheme: light;
+    background-color: #ffffff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+  }
+  select option, select optgroup, select.field option, select.field optgroup {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+  select option:checked {
+    background-color: #dbeafe;
+    color: #0f172a;
+  }
+  .field {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+  .field:focus {
+    background-color: #ffffff;
+    border-color: #2563eb;
+  }
+  .field::placeholder {
+    color: #64748b;
+  }
+  .surface {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+    color: #0f172a;
+    box-shadow: 0 1px 3px 0 rgb(15 23 42 / 0.05);
+  }
+  .btn-primary {
+    background-color: #2563eb;
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+  .btn-secondary {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+  }
+  .ac-car-loader__stage {
+    background:
+      radial-gradient(120% 85% at 50% 72%, rgb(56 189 248 / 0.22) 0%, rgb(186 230 253 / 0.35) 48%, transparent 78%),
+      linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    border-color: #cbd5e1;
+    box-shadow:
+      0 20px 40px -18px rgb(15 23 42 / 0.16),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.9);
+  }
+  .ac-car-loader__svg {
+    filter: drop-shadow(0 12px 18px rgb(15 23 42 / 0.18));
+  }
+  .ac-skeleton {
+    background: #e2e8f0;
+  }
+  .ac-skeleton::after {
+    background: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.7) 50%, transparent 100%);
+  }
+}
+
+.vehicle-photo { aspect-ratio: 1.65; }
+.hero-title { font-size: clamp(3rem, 5.5vw, 5rem); letter-spacing: -.035em; line-height: 1.04; }
+.hero-search:focus-within { border-color: #60a5fa; }
+.hero-search input:focus-visible { outline-offset: 4px; border-radius: 2px; }
+.light-surface { color-scheme: light; }
+.light-surface .text-zinc-400 { color: #52525b; }
+.light-surface :focus-visible { outline-color: #1d4ed8; }
+.featured-car { transition: border-color 180ms ease; }
+.featured-car:hover { border-color: #60a5fa; }
+.featured-car:focus-visible { outline-offset: -3px; }
+.price { font-variant-numeric: tabular-nums; }
+
+@keyframes acCardReveal {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes acHeroCopyIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes acHeroMediaIn {
+  from { opacity: 0; transform: scale(1.035); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes acShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes acProgressSweep {
+  0% { transform: translateX(-100%) scaleX(0.25); }
+  50% { transform: translateX(0%) scaleX(0.6); }
+  100% { transform: translateX(100%) scaleX(0.25); }
+}
+@keyframes acWheelSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes acCarSuspension {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2.5px) rotate(-0.35deg); }
+  50% { transform: translateY(-1px) rotate(0.2deg); }
+  75% { transform: translateY(-3px) rotate(-0.15deg); }
+}
+@keyframes acCar3DStage {
+  0%, 100% { transform: rotateX(8deg) rotateY(-9deg) translateY(0px) scale(1); }
+  50% { transform: rotateX(5deg) rotateY(7deg) translateY(-4px) scale(1.02); }
+}
+@keyframes acRoadSweep {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -72; }
+}
+@keyframes acStrokeTrace {
+  0% { stroke-dashoffset: 380; opacity: 0.35; }
+  50% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -380; opacity: 0.35; }
+}
+@keyframes acStudioLightSweep {
+  0% { transform: translateX(-160px) skewX(-28deg); opacity: 0; }
+  20% { opacity: 0.9; }
+  80% { opacity: 0.9; }
+  100% { transform: translateX(220px) skewX(-28deg); opacity: 0; }
+}
+@keyframes acHeadlightPulse {
+  0%, 100% { opacity: 0.78; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.06); }
+}
+@keyframes acShadowPulse {
+  0%, 100% { transform: scaleX(1) scaleY(1); opacity: 0.85; }
+  50% { transform: scaleX(0.95) scaleY(0.92); opacity: 0.65; }
+}
+@keyframes acHeartBeat {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.28); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+@keyframes acModalPop {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes acFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes acToastSlideUp {
+  from { opacity: 0; transform: translate(-50%, 14px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.ac-top-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  z-index: 120;
+  overflow: hidden;
+  background: rgb(96 165 250 / 0.14);
+  pointer-events: none;
+}
+.ac-top-progress__bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #60a5fa, #93c5fd, transparent);
+  transform-origin: left center;
+  animation: acProgressSweep 1.15s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.ac-car-loader {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  perspective: 950px;
+}
+.ac-car-loader__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px 10px;
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 85% at 50% 72%, rgb(56 189 248 / 0.14) 0%, rgb(30 58 138 / 0.08) 48%, transparent 78%),
+    linear-gradient(180deg, rgb(17 24 39 / 0.65) 0%, rgb(9 13 22 / 0.88) 100%);
+  border: 1px solid rgb(148 163 184 / 0.14);
+  box-shadow:
+    0 24px 48px -18px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+  transform-style: preserve-3d;
+  animation: acCar3DStage 3.6s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+.ac-car-loader__svg {
+  overflow: visible;
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.65));
+}
+.ac-car-loader__body {
+  animation: acCarSuspension 1.35s ease-in-out infinite;
+}
+.ac-car-loader__trace {
+  stroke-dasharray: 380;
+  animation: acStrokeTrace 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.ac-car-loader__sheen {
+  animation: acStudioLightSweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.ac-car-loader__beam {
+  transform-origin: left center;
+  animation: acHeadlightPulse 1.4s ease-in-out infinite;
+}
+.ac-car-loader__shadow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: acShadowPulse 1.35s ease-in-out infinite;
+}
+.ac-car-loader__wheel {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: acWheelSpin 0.55s linear infinite;
+}
+.ac-car-loader__road {
+  stroke-dasharray: 18 18;
+  animation: acRoadSweep 0.48s linear infinite;
+}
+.ac-car-loader__aero {
+  stroke-dasharray: 28 44;
+  animation: acRoadSweep 0.72s linear infinite;
+}
+
+.ac-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #182232;
+}
+.ac-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgb(147 197 253 / 0.09) 50%, transparent 100%);
+  animation: acShimmer 1.5s infinite;
+}
+
+.vehicle-card {
+  position: relative;
+  animation: acCardReveal 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 55ms);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms ease, box-shadow 200ms ease;
+}
+.vehicle-card__image {
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), filter 220ms ease;
+}
+.vehicle-card__cta-arrow {
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ac-heart-pop {
+  animation: acHeartBeat 340ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ac-modal-backdrop {
+  animation: acFadeIn 180ms ease out;
+}
+.ac-modal-panel {
+  animation: acModalPop 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ac-toast {
+  animation: acToastSlideUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ac-photo-fade {
+  animation: acFadeIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.field::placeholder { color: #a1a1aa; opacity: 1; }
+button:active, a.btn-primary:active, a.btn-secondary:active { transform: scale(.98); }
+@media (hover: hover) and (pointer: fine) {
+  .vehicle-card:hover {
+    transform: translateY(-5px);
+    border-color: rgb(121 175 255 / .38);
+    box-shadow: 0 20px 42px -18px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(121 175 255 / 0.14);
+  }
+  .vehicle-card:hover .vehicle-card__image { transform: scale(1.04); }
+  .vehicle-card:hover .vehicle-card__cta-arrow { transform: translateX(4px); }
+}
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display:none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior:auto; }
+  .vehicle-card, .vehicle-card__image, .vehicle-card__cta-arrow, .btn-primary, .btn-secondary, .field, .featured-car, .ac-skeleton::after, .ac-top-progress__bar, .ac-car-loader__stage, .ac-car-loader__body, .ac-car-loader__trace, .ac-car-loader__sheen, .ac-car-loader__beam, .ac-car-loader__shadow, .ac-car-loader__wheel, .ac-car-loader__road, .ac-car-loader__aero, .ac-heart-pop, .ac-modal-panel, .ac-toast, .ac-photo-fade {
+    transition: none !important;
+    animation: none !important;
+  }
+  button:active, a.btn-primary:active, a.btn-secondary:active, .vehicle-card:hover, .vehicle-card:hover .vehicle-card__image, .vehicle-card:hover .vehicle-card__cta-arrow {
+    transform: none !important;
+  }
+}
