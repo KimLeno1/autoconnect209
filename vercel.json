@@ -67,6 +67,34 @@
     {
       "source": "/api/listing-billing/:path*",
       "destination": "/api/dispatch?route=listing-billing/:path*"
+    },
+    {
+      "source": "/vehicle/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dealer/dashboard",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/account",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/browse",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/compare",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
     }
   ]
 }
