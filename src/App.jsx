@@ -587,7 +587,7 @@ function VehiclePaystackCheckout({car,user,csrf,onClose,onNotify,onNavigate}) {
                 )}
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 dark:text-zinc-400">Status</span>
-                  <span className="font-medium text-emerald-600 dark:text-emerald-300">{receipt.order?.paymentPlan==='deposit'?'Ride reserved · Escrow':'Paid · Escrow'}</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-300">{receipt.order?.paymentPlan==='deposit'?'Deposit confirmed · Reserved':'Payment confirmed'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 dark:text-zinc-400">Method</span>
@@ -643,13 +643,13 @@ function VehiclePaystackCheckout({car,user,csrf,onClose,onNotify,onNavigate}) {
                   <ul className="grid gap-1 text-[11px] leading-4 text-slate-600 dark:text-zinc-400">
                     <li>• <strong className="text-slate-800 dark:text-zinc-200">Secures the ride:</strong> Locks this vehicle for you so no other buyer can take it.</li>
                     <li>• <strong className="text-slate-800 dark:text-zinc-200">Inspection &amp; test drive:</strong> Unlocks physical vehicle &amp; document verification.</li>
-                    <li>• <strong className="text-slate-800 dark:text-zinc-200">Escrow protection:</strong> Refundable if the car does not match the listing.</li>
+                    <li>• <strong className="text-slate-800 dark:text-zinc-200">Payment record:</strong> Paystack confirms the transaction. Inspect the vehicle and agree handover details directly with the seller.</li>
                     <li>• <strong className="text-slate-800 dark:text-zinc-200">Pay balance at handover:</strong> Remaining {money(Math.max(0,fullPrice-depositPrice),car.currency)} is due only after you approve the car.</li>
                   </ul>
                 </div>
               ):(
                 <div className="rounded-xl border border-slate-200/80 bg-slate-50 px-3.5 py-2 text-[11px] leading-4 text-slate-600 dark:border-white/10 dark:bg-white/[.03] dark:text-zinc-400">
-                  Held in Auto Connect Escrow and released to the seller only after you inspect and accept the vehicle at handover.
+                  Paystack sends the payment to the configured merchant account. Auto Connect records the transaction but does not hold funds in escrow. Confirm inspection, handover and refund terms with the seller.
                 </div>
               )}
 
