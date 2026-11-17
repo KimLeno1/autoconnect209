@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { proxyToSupabase } from './_supabase-proxy.js';
 
 const base = (process.env.AUTO_CONNECT_SUPABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const key = process.env.AUTO_CONNECT_SUPABASE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -110,7 +111,7 @@ export default async function handler(req, res) {
       const rules = await query('customs_rules', 'select=country_code,rule_json,source_url,effective_at&order=country_code.asc');
       return send(res, 200, { items: rules.map(x => { let d = {}; try { d = typeof x.rule_json === 'string' ? JSON.parse(x.rule_json) : x.rule_json || {}; } catch {} return { countryCode: x.country_code, ...d, sourceUrl: x.source_url, effectiveAt: x.effective_at }; }) });
     }
-    return send(res, 404, { error: 'API route not implemented in the Supabase deployment yet.' });
+    return proxyToSupabase(req, res);
   } catch (error) {
     console.error('Auto Connect API:', error.message);
     return send(res, 500, { error: 'The request could not be completed. Check the Supabase connection and server configuration.' });
