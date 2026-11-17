@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/listings/verify-purchase",
+      "destination": "/api/dispatch?route=listings/verify-purchase"
+    },
+    {
+      "source": "/api/listings/:id/buy",
+      "destination": "/api/dispatch?route=listings/:id/buy"
+    },
+    {
       "source": "/api/listings/:id/offers",
       "destination": "/api/dispatch?route=listings/:id/offers"
     },
