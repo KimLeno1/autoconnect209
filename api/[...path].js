@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { proxyToSupabase } from './_supabase-proxy.js';
+import { proxyToSupabase } from '../lib/supabase-proxy.js';
 
 const base = (process.env.AUTO_CONNECT_SUPABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const key = process.env.AUTO_CONNECT_SUPABASE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
