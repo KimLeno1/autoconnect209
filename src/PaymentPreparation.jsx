@@ -27,7 +27,7 @@ export function PaymentPreparation({ request, csrf }) {
           <div className="ac-health">
             <div><span>Payment initialization</span><b>{configured ? 'Configured' : 'Waiting for PAYSTACK_SECRET_KEY'}</b></div>
             <div><span>Payment verification</span><b>{configured ? 'Server-side verification enabled' : 'Unavailable'}</b></div>
-            <div><span>Webhook</span><b>{data.webhookPath}</b></div>
+            <div><span>Webhook URL</span><b>{data.webhookUrl || data.webhookPath}</b></div>
             <div><span>Automatic refunds</span><b>{data.connection.refundExecution ? 'Provider endpoint enabled' : 'Unavailable until Paystack is configured'}</b></div>
           </div>
           <form className="ac-form" onSubmit={async e => {
