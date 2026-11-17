@@ -1,1 +1,2 @@
-export default function handler(_req, res) { res.statusCode = 503; res.setHeader('Content-Type', 'application/json; charset=utf-8'); res.end(JSON.stringify({ error: 'Secure account sessions are being migrated. Please try again later.' })); }
+import { proxyToSupabase } from '../_supabase-proxy.js';
+export default function handler(req, res) { return proxyToSupabase(req, res); }
