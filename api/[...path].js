@@ -79,10 +79,7 @@ export default async function handler(req, res) {
   const path = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
   if (req.method === 'OPTIONS') return send(res, 204, {});
   try {
-    if (path === 'health' && req.method === 'GET') {
-      const rows = await query('public_vehicle_listings', 'select=id&limit=1');
-      return send(res, 200, { status: 'ok', service: 'auto-connect-api', database: 'connected', sampleRows: rows.length, checkedAt: new Date().toISOString() });
-    }
+    if (path === 'health' && req.method === 'GET') return proxyToSupabase(req, res);
     if (path === 'listings' && req.method === 'GET') {
       const all = await publicVehicles(Object.fromEntries(url.searchParams.entries()));
       const page = Math.max(1, Math.min(100, Number(url.searchParams.get('page')) || 1));
@@ -95,12 +92,7 @@ export default async function handler(req, res) {
       const vehicle = all.find(x => x.id === decodeURIComponent(match[1]));
       return vehicle ? send(res, 200, { vehicle }) : send(res, 404, { error: 'Vehicle listing not found.' });
     }
-    if (path === 'auth/me' && req.method === 'GET') {
-      return send(res, 200, { user: null, csrfToken: null });
-    }
-    if (path === 'auth/login' || path === 'auth/register') {
-      return send(res, 503, { error: 'Secure account sessions are being migrated. Please try again later.' });
-    }
+    if (path === 'auth/me' || path === 'auth/login' || path === 'auth/register') return proxyToSupabase(req, res);
     if (path === 'makes' && req.method === 'GET') {
       const [makes, models] = await Promise.all([
         query('vehicle_makes', 'select=id,name&order=name.asc'),
