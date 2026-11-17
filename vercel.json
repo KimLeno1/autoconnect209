@@ -1,18 +1,64 @@
 {
   "rewrites": [
-    { "source": "/api/seller/operations/:path*", "destination": "/api/dispatch?route=seller/operations/:path*" },
-    { "source": "/api/buyer/workspace/:path*", "destination": "/api/dispatch?route=buyer/workspace/:path*" },
-    { "source": "/api/admin/operations/:path*", "destination": "/api/dispatch?route=admin/operations/:path*" },
-    { "source": "/api/admin/dealers/:path*", "destination": "/api/dispatch?route=admin/dealers/:path*" },
-    { "source": "/api/admin/vehicles/:path*", "destination": "/api/dispatch?route=admin/vehicles/:path*" },
-    { "source": "/api/admin/enquiries/:path*", "destination": "/api/dispatch?route=admin/enquiries/:path*" },
-    { "source": "/api/admin/reports/:path*", "destination": "/api/dispatch?route=admin/reports/:path*" },
-    { "source": "/api/dealer/:path*", "destination": "/api/dispatch?route=dealer/:path*" },
-    { "source": "/api/buyer/:path*", "destination": "/api/dispatch?route=buyer/:path*" },
-    { "source": "/api/enquiries/:path*", "destination": "/api/dispatch?route=enquiries/:path*" },
-    { "source": "/api/notifications/:path*", "destination": "/api/dispatch?route=notifications/:path*" },
-    { "source": "/api/saved-searches/:path*", "destination": "/api/dispatch?route=saved-searches/:path*" },
-    { "source": "/api/favourites/:path*", "destination": "/api/dispatch?route=favourites/:path*" },
-    { "source": "/api/listing-billing/:path*", "destination": "/api/dispatch?route=listing-billing/:path*" }
+    {
+      "source": "/api/listings/:id/offers",
+      "destination": "/api/dispatch?route=listings/:id/offers"
+    },
+    {
+      "source": "/api/seller/operations/:path*",
+      "destination": "/api/dispatch?route=seller/operations/:path*"
+    },
+    {
+      "source": "/api/buyer/workspace/:path*",
+      "destination": "/api/dispatch?route=buyer/workspace/:path*"
+    },
+    {
+      "source": "/api/admin/operations/:path*",
+      "destination": "/api/dispatch?route=admin/operations/:path*"
+    },
+    {
+      "source": "/api/admin/dealers/:path*",
+      "destination": "/api/dispatch?route=admin/dealers/:path*"
+    },
+    {
+      "source": "/api/admin/vehicles/:path*",
+      "destination": "/api/dispatch?route=admin/vehicles/:path*"
+    },
+    {
+      "source": "/api/admin/enquiries/:path*",
+      "destination": "/api/dispatch?route=admin/enquiries/:path*"
+    },
+    {
+      "source": "/api/admin/reports/:path*",
+      "destination": "/api/dispatch?route=admin/reports/:path*"
+    },
+    {
+      "source": "/api/dealer/:path*",
+      "destination": "/api/dispatch?route=dealer/:path*"
+    },
+    {
+      "source": "/api/buyer/:path*",
+      "destination": "/api/dispatch?route=buyer/:path*"
+    },
+    {
+      "source": "/api/enquiries/:path*",
+      "destination": "/api/dispatch?route=enquiries/:path*"
+    },
+    {
+      "source": "/api/notifications/:path*",
+      "destination": "/api/dispatch?route=notifications/:path*"
+    },
+    {
+      "source": "/api/saved-searches/:path*",
+      "destination": "/api/dispatch?route=saved-searches/:path*"
+    },
+    {
+      "source": "/api/favourites/:path*",
+      "destination": "/api/dispatch?route=favourites/:path*"
+    },
+    {
+      "source": "/api/listing-billing/:path*",
+      "destination": "/api/dispatch?route=listing-billing/:path*"
+    }
   ]
 }
