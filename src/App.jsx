@@ -132,7 +132,7 @@ function App() {
   };
   const toggleCompare=id=>{const next=new Set(compared);if(next.has(id))next.delete(id);else if(next.size<3)next.add(id);else {notify('Compare up to three cars at a time.');return;}setCompared(next);saveSet('apex:compare',next);};
 
-  useEffect(()=>{if(path.startsWith('/vehicle/')){const vehicleId=encodeURIComponent(path.split('/')[2]);setVehicleBusy(true);Promise.all([request(`/api/listings/${vehicleId}`),new Promise(resolve=>setTimeout(resolve,360))]).then(([d])=>{setActiveCar(d.vehicle);if(user?.role==='buyer'&&csrf)request(`/api/buyer/recently-viewed/${vehicleId}`,{method:'POST',csrf}).catch(()=>{});if(user?.role==='buyer'&&new URLSearchParams(location.search).get('buy')==='1'){setCheckoutCar(d.vehicle);history.replaceState({},'',location.pathname);setSearchString('');}}).catch(()=>setActiveCar(null)).finally(()=>setVehicleBusy(false));}else{setActiveCar(null);setVehicleBusy(false);}},[path,user?.id,user?.role,csrf]);
+  useEffect(()=>{if(path.startsWith('/vehicle/')){const vehicleId=encodeURIComponent(path.split('/')[2]);setVehicleBusy(true);Promise.all([request(`/api/listings/${vehicleId}`),new Promise(resolve=>setTimeout(resolve,360))]).then(([d])=>{setActiveCar(d.vehicle);if(user?.role==='buyer'&&csrf)request(`/api/buyer/recently-viewed/${vehicleId}`,{method:'POST',csrf}).catch(()=>{});const params=new URLSearchParams(location.search);if(user?.role==='buyer'&&params.get('buy')==='1'){setCheckoutCar(d.vehicle);params.delete('buy');const query=params.toString();history.replaceState({},'',location.pathname+(query?'?'+query:''));setSearchString(query);}}).catch(()=>setActiveCar(null)).finally(()=>setVehicleBusy(false));}else{setActiveCar(null);setVehicleBusy(false);}},[path,user?.id,user?.role,csrf]);
   useEffect(()=>{
     if(path!=='/favorites')return;
     if(user?.role==='buyer')request('/api/favourites').then(d=>{const ids=new Set(d.items.map(c=>c.id));setFavorites(ids);saveSet('apex:favorites',ids);setCars(d.items);}).catch(e=>notify(e.message));
@@ -158,6 +158,7 @@ function App() {
   const openPath=(to)=>go(to);
 
   const buy=car=>{
+    if(car?.is_demo){notify('This is an illustrative sample listing and cannot be purchased.');return;}
     if(!user||user.role!=='buyer'){
       notify('Please sign in with a buyer account to purchase this vehicle.');
       go('/login?return='+encodeURIComponent(`/vehicle/${car.id}?buy=1`));
@@ -477,15 +478,22 @@ function VehiclePaystackCheckout({car,user,csrf,onClose,onNotify,onNavigate}) {
   const [channel,setChannel]=useState('mobile_money');
   const [momoNetwork,setMomoNetwork]=useState('MTN MoMo');
   const [momoPhone,setMomoPhone]=useState('024 800 9900');
-  const [cardNumber,setCardNumber]=useState('4084 0840 8408 4084');
-  const [cardExpiry,setCardExpiry]=useState('08 / 29');
-  const [cardCvv,setCardCvv]=useState('408');
   const [bankOption,setBankOption]=useState('Ecobank Ghana');
   const [deliveryCity,setDeliveryCity]=useState(car.city||'Accra');
   const [submitting,setSubmitting]=useState(false);
   const [error,setError]=useState('');
   const [receipt,setReceipt]=useState(null);
 
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search),reference=params.get('reference');
+    if(!reference||user?.role!=='buyer'||receipt)return;
+    let active=true;setSubmitting(true);setError('');
+    request('/api/listings/verify-purchase',{method:'POST',csrf,body:{reference}})
+      .then(result=>{if(!active)return;setPaymentPlan(result.order?.paymentPlan||'full');setReceipt(result);onNotify(result.notice||`Order ${result.order?.reference} confirmed by Paystack.`);params.delete('reference');params.delete('trxref');const query=params.toString();window.history.replaceState({},'',window.location.pathname+(query?'?'+query:''));})
+      .catch(e=>{if(active)setError(e.message);})
+      .finally(()=>{if(active)setSubmitting(false);});
+    return()=>{active=false;};
+  },[csrf,user?.id,car.id]);
   const fullPrice=Number(car.price)||0;
   const allowDeposit=car.allowDeposit!==false&&car.allow_deposit!==0&&car.listingData?.allowDeposit!==false;
   const rawSellerDeposit=Number(car.depositAmount??car.listingData?.depositAmount??(car.deposit_amount_minor?car.deposit_amount_minor/100:0));
@@ -512,8 +520,8 @@ function VehiclePaystackCheckout({car,user,csrf,onClose,onNotify,onNavigate}) {
           buyerPhone:momoPhone
         }
       });
-      setReceipt(res);
-      onNotify(`Order ${res.order?.reference} confirmed.`);
+      if(!res.checkoutUrl||!/^https:\/\/checkout\.paystack\.com\//.test(res.checkoutUrl))throw new Error('Paystack did not return a valid secure checkout link.');
+      window.location.assign(res.checkoutUrl);
     }catch(err){
       setError(err.message);
     }finally{
@@ -681,33 +689,8 @@ function VehiclePaystackCheckout({car,user,csrf,onClose,onNotify,onNavigate}) {
               )}
 
               {channel==='card'&&(
-                <div className="grid gap-2.5">
-                  <input
-                    className="field min-h-11 text-sm"
-                    required
-                    value={cardNumber}
-                    onChange={e=>setCardNumber(e.target.value)}
-                    placeholder="Card number"
-                    aria-label="Card number"
-                  />
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <input
-                      className="field min-h-11 text-sm"
-                      required
-                      value={cardExpiry}
-                      onChange={e=>setCardExpiry(e.target.value)}
-                      placeholder="MM / YY"
-                      aria-label="Expiry"
-                    />
-                    <input
-                      className="field min-h-11 text-sm"
-                      required
-                      value={cardCvv}
-                      onChange={e=>setCardCvv(e.target.value)}
-                      placeholder="CVV"
-                      aria-label="CVV"
-                    />
-                  </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs leading-5 text-slate-600 dark:border-white/10 dark:bg-white/[.03] dark:text-zinc-400">
+                  Card details are entered only on Paystack's secure hosted checkout. Auto Connect never collects or stores your card number, expiry or CVV.
                 </div>
               )}
 
@@ -720,6 +703,9 @@ function VehiclePaystackCheckout({car,user,csrf,onClose,onNotify,onNavigate}) {
                 </select>
               )}
 
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs leading-5 text-slate-600 dark:border-white/10 dark:bg-white/[.03] dark:text-zinc-400">
+                You will be redirected to Paystack to complete the selected payment method. The order is confirmed only after Paystack verifies a successful live payment.
+              </div>
               <input
                 className="field min-h-11 text-sm"
                 required
