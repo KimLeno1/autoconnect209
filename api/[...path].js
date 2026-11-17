@@ -1,3 +1,4 @@
+export const config = { api: { bodyParser: false } };
 import { createHash } from 'node:crypto';
 import { proxyToSupabase } from '../lib/supabase-proxy.js';
 
