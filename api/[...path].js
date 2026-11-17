@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 const base = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
 async function query(table, params, options = {}) {
   if (!base || !key) throw new Error('Missing server-side Supabase configuration');
@@ -37,25 +37,10 @@ function inList(values) {
   return 'in.(' + values.map(x => '"' + String(x).replaceAll('"', '\\"') + '"').join(',') + ')';
 }
 async function publicVehicles(filters = {}) {
-  let rows = await query('vehicles', 'select=*&status=eq.active&deleted_at=is.null&order=created_at.desc&limit=500');
+  let rows = await query('public_vehicle_listings', 'select=*&order=created_at.desc&limit=500');
   rows = rows || [];
-  const ids = [...new Set(rows.map(x => x.dealer_id).filter(Boolean))];
-  const vehicleIds = rows.map(x => x.id);
-  const [dealers, sellers, pictures] = await Promise.all([
-    ids.length ? query('dealer_profiles', 'user_id=' + inList(ids) + '&select=user_id,seller_type,business_name,city,region,status') : [],
-    ids.length ? query('users', 'id=' + inList(ids) + '&select=id,status') : [],
-    vehicleIds.length ? query('vehicle_images', 'vehicle_id=' + inList(vehicleIds) + '&select=id,vehicle_id,image_url,alt_text,sort_order&order=sort_order.asc') : []
-  ]);
-  const dealerMap = new Map((dealers || []).map(x => [x.user_id, x]));
-  const sellerMap = new Map((sellers || []).map(x => [x.id, x]));
-  const imageMap = new Map();
-  for (const image of pictures || []) {
-    if (!imageMap.has(image.vehicle_id)) imageMap.set(image.vehicle_id, []);
-    imageMap.get(image.vehicle_id).push({ id: image.id, url: image.image_url, alt: image.alt_text || '', sort_order: image.sort_order });
-  }
-  rows = rows.filter(v => Boolean(v.is_demo) || (dealerMap.get(v.dealer_id)?.status === 'approved' && sellerMap.get(v.dealer_id)?.status === 'active'));
   const q = String(filters.q || '').trim().toLowerCase();
-  if (q) rows = rows.filter(v => [v.make,v.model,v.trim,v.engine,v.body_type,v.city,v.country].some(x => String(x || '').toLowerCase().includes(q)));
+  if (q) rows = rows.filter(v => [v.make,v.model,v.trim,v.engine,v.body_type,v.city,v.country,v.dealer_name].some(x => String(x || '').toLowerCase().includes(q)));
   for (const field of ['make','fuel','transmission','condition','drivetrain']) {
     if (filters[field]) rows = rows.filter(v => String(v[field] || '').toLowerCase() === String(filters[field]).toLowerCase());
   }
@@ -69,21 +54,19 @@ async function publicVehicles(filters = {}) {
   return rows.map(v => {
     let data = {};
     try { data = typeof v.listing_data === 'string' ? JSON.parse(v.listing_data || '{}') : (v.listing_data || {}); } catch {}
-    for (const k of ['vin','registrationNumber','businessAddress','offerMinPrice','offerMaxPrice','offer_min_minor','offer_max_minor','phone','whatsapp','email','contactEmail']) delete data[k];
     const price = Number(v.price_minor) > 0 ? Number(v.price_minor)/100 : Number(v.price || 0);
     const allowOffers = Boolean(v.allow_offers || data.allowOffers);
     const allowDeposit = v.allow_deposit == null ? data.allowDeposit !== false : Boolean(v.allow_deposit);
-    const dealer = dealerMap.get(v.dealer_id);
-    const { dealer_id, listing_data, offer_min_minor, offer_max_minor, ...safe } = v;
     const deposit = Number(v.deposit_amount_minor || 0)/100 || (allowDeposit ? Math.max(1, Math.round(price*.1)) : null);
+    const { listing_data, dealer_id, dealer_name, seller_type, dealer_city, dealer_region, dealer_status, ...safe } = v;
     return {
       ...safe, price, location: v.location || [v.city,v.country].filter(Boolean).join(', '),
       allow_offers: allowOffers ? 1 : 0, allowOffers,
       allow_deposit: allowDeposit ? 1 : 0, allowDeposit,
       deposit_amount_minor: allowDeposit && deposit ? Math.round(deposit*100) : null,
       depositAmount: allowDeposit ? deposit : null, listingData: data,
-      images: imageMap.get(v.id) || [],
-      dealer: dealer ? { name: dealer.business_name, type: dealer.seller_type || 'dealer', city: dealer.city || '', region: dealer.region || '', status: dealer.status, phone: '', whatsapp: '', website: '', profileId: v.dealer_id } : null,
+      images: Array.isArray(v.images) ? v.images : [],
+      dealer: dealer_name ? { name: dealer_name, type: seller_type || 'dealer', city: dealer_city || '', region: dealer_region || '', status: dealer_status, phone: '', whatsapp: '', website: '', profileId: dealer_id } : null,
       is_demo: Boolean(v.is_demo)
     };
   });
@@ -95,7 +78,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return send(res, 204, {});
   try {
     if (path === 'health' && req.method === 'GET') {
-      const rows = await query('vehicles', 'select=id&limit=1');
+      const rows = await query('public_vehicle_listings', 'select=id&limit=1');
       return send(res, 200, { status: 'ok', service: 'auto-connect-api', database: 'connected', sampleRows: rows.length, checkedAt: new Date().toISOString() });
     }
     if (path === 'listings' && req.method === 'GET') {
@@ -111,15 +94,10 @@ export default async function handler(req, res) {
       return vehicle ? send(res, 200, { vehicle }) : send(res, 404, { error: 'Vehicle listing not found.' });
     }
     if (path === 'auth/me' && req.method === 'GET') {
-      const token = cookie(req, 'apex_session');
-      if (!token) return send(res, 200, { user: null, csrfToken: null });
-      const hash = createHash('sha256').update(token).digest('hex');
-      const sessions = await query('sessions', 'id_hash=eq.' + encodeURIComponent(hash) + '&select=user_id,csrf_token,expires_at&limit=1');
-      const session = sessions[0];
-      if (!session || Date.parse(session.expires_at) < Date.now()) return send(res, 200, { user: null, csrfToken: null });
-      const users = await query('users', 'id=eq.' + encodeURIComponent(session.user_id) + '&select=id,email,role,status,email_verified&limit=1');
-      const user = users[0];
-      return send(res, 200, { user: user?.status === 'active' ? { id: user.id, email: user.email, role: user.role, emailVerified: Boolean(user.email_verified) } : null, csrfToken: user?.status === 'active' ? session.csrf_token : null });
+      return send(res, 200, { user: null, csrfToken: null });
+    }
+    if (path === 'auth/login' || path === 'auth/register') {
+      return send(res, 503, { error: 'Secure account sessions are being migrated. Please try again later.' });
     }
     if (path === 'makes' && req.method === 'GET') {
       const [makes, models] = await Promise.all([
